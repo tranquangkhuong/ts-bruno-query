@@ -1,16 +1,15 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/**/*.ts"],
-  format: ["esm", "cjs"],
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
   dts: true,
   splitting: false,
   sourcemap: false,
   clean: true,
   outDir: "dist",
-  outExtension({ format }) {
-    return {
-      js: format === "esm" ? ".mjs" : ".cjs",
-    };
-  }
+  target: "es5",
+  minify: true,
+  treeshake: true,
+  legacyOutput: false
 });
