@@ -7,7 +7,7 @@
     "bruno",
     "query"
   ],
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "author": "Tran Quang Khuong",
   "repository": {
@@ -16,10 +16,14 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsup",
+    "build": "tsup && npm run post-build",
+    "post-build": "node scripts/fix-dts.js",
     "dev": "tsup --watch",
-    "test": "clear && ts-node test/o2s.ts",
-    "test2": "clear && ts-node test/s2o.ts"
+    "test": "npm run test:comprehensive && npm run test:cjs && npm run test:mjs && npm run test:types",
+    "test:comprehensive": "ts-node tests/comprehensive.ts",
+    "test:cjs": "node tests/comprehensive.cjs",
+    "test:mjs": "node tests/comprehensive.mjs",
+    "test:types": "ts-node tests/comprehensive-types.ts"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

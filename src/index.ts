@@ -1,15 +1,9 @@
 import { QueryOperator, SortDirection } from './enum';
-import {
-  Filter,
-  FilterGroup,
-  FilterShorthand,
-  QueryParameter,
-  SortRule,
-} from './interface';
+import { Filter, FilterGroup, FilterShorthand, QueryParameter, Sort } from './interface';
 
 // Re-export enums and interfaces for external use
-export * from './interface';
 export * from './enum';
+export * from './interface';
 
 /**
  * Query Builder for Bruno Library in PHP
@@ -26,13 +20,7 @@ export class BrunoQuery {
    * @type QueryParameter
    * @see {@link QueryParameter}
    */
-  private _params: QueryParameter = {
-    includes: [],
-    sort: [],
-    filter_groups: [],
-    limit: 15,
-    page: 1,
-  };
+  private _params: QueryParameter = {};
 
   /**
    * Add includes to the query parameters
@@ -51,6 +39,7 @@ export class BrunoQuery {
    * @returns `this`
    */
   addArrayIncludes(includes: string[]): this {
+    if (!this._params.includes) this._params.includes = [];
     this._params.includes.push(...includes);
     return this;
   }
@@ -81,9 +70,9 @@ export class BrunoQuery {
    *
    * @param sort - Sort rules. E.g. `{ key: 'name', direction: SortDirection.ASC }`
    * @returns `this`
-   * @see {@link SortRule}
+   * @see {@link Sort}
    */
-  addSort(...sort: SortRule[]): this {
+  addSort(...sort: Sort[]): this {
     return this.addArraySort(sort);
   }
 
@@ -92,9 +81,10 @@ export class BrunoQuery {
    *
    * @param sort - Array of sort rules. E.g. `[{ key: 'name', direction: SortDirection.ASC }]`
    * @returns `this`
-   * @see {@link SortRule}
+   * @see {@link Sort}
    */
-  addArraySort(sort: SortRule[]): this {
+  addArraySort(sort: Sort[]): this {
+    if (!this._params.sort) this._params.sort = [];
     this._params.sort.push(...sort);
     return this;
   }
@@ -104,9 +94,9 @@ export class BrunoQuery {
    *
    * @param sort - Sort rules. E.g. `{ key: 'name', direction: SortDirection.ASC }`
    * @returns `this`
-   * @see {@link SortRule}
+   * @see {@link Sort}
    */
-  setSort(...sort: SortRule[]): this {
+  setSort(...sort: Sort[]): this {
     return this.setArraySort(sort);
   }
 
@@ -115,9 +105,9 @@ export class BrunoQuery {
    *
    * @param sort - Array of sort rules. E.g. `[{ key: 'name', direction: SortDirection.ASC }]`
    * @returns `this`
-   * @see {@link SortRule}
+   * @see {@link Sort}
    */
-  setArraySort(sort: SortRule[]): this {
+  setArraySort(sort: Sort[]): this {
     this._params.sort = [...sort];
     return this;
   }
@@ -141,7 +131,11 @@ export class BrunoQuery {
    * @see {@link FilterGroup}
    */
   addArrayFilterGroup(groups: FilterGroup[]): this {
-    this._params.filter_groups.push(...groups);
+    if (!this._params.filter_groups) this._params.filter_groups = [];
+
+    // Process each group to remove duplicate filters
+    const processedGroups = groups.map(group => this.deduplicateFilters(group));
+    this._params.filter_groups.push(...processedGroups);
     return this;
   }
 
@@ -164,17 +158,22 @@ export class BrunoQuery {
    * @see {@link FilterGroup}
    */
   setArrayFilterGroup(groups: FilterGroup[]): this {
-    this._params.filter_groups = [...groups];
+    // Process each group to remove duplicate filters
+    this._params.filter_groups = groups.map(group => this.deduplicateFilters(group));
     return this;
   }
 
   /**
    * Set the limit of the query parameters
    *
-   * @param limit - Limit of resources to return
+   * @param limit - Limit of resources to return. If `null`, the limit parameter will be removed.
    * @returns `this`
    */
-  setLimit(limit: number): this {
+  setLimit(limit: number | null): this {
+    if (limit === null) {
+      delete this._params.limit;
+      return this;
+    }
     this._params.limit = limit < 0 ? BrunoQuery.DEFAULT_LIMIT : limit;
     return this;
   }
@@ -182,10 +181,14 @@ export class BrunoQuery {
   /**
    * Set the page number of the query parameters
    *
-   * @param page - Page number
+   * @param page - Page number. If `null`, the page parameter will be removed.
    * @returns `this`
    */
-  setPage(page: number): this {
+  setPage(page: number | null): this {
+    if (page === null) {
+      delete this._params.page;
+      return this;
+    }
     this._params.page = page < 0 ? BrunoQuery.DEFAULT_PAGE : page;
     return this;
   }
@@ -213,22 +216,13 @@ export class BrunoQuery {
     if (!this._params.optional) {
       // If no existing optional, just set it
       this._params.optional = optional;
-    } else if (
-      Array.isArray(this._params.optional) &&
-      Array.isArray(optional)
-    ) {
+    } else if (Array.isArray(this._params.optional) && Array.isArray(optional)) {
       // Both are arrays, merge them
       this._params.optional.push(...optional);
-    } else if (
-      Array.isArray(this._params.optional) &&
-      !Array.isArray(optional)
-    ) {
+    } else if (Array.isArray(this._params.optional) && !Array.isArray(optional)) {
       // Existing is array, new is object, add to array
       this._params.optional.push(optional);
-    } else if (
-      !Array.isArray(this._params.optional) &&
-      Array.isArray(optional)
-    ) {
+    } else if (!Array.isArray(this._params.optional) && Array.isArray(optional)) {
       // Existing is object, new is array, convert to array
       this._params.optional = [this._params.optional, ...optional];
     } else {
@@ -244,13 +238,7 @@ export class BrunoQuery {
    * @returns `this`
    */
   reset(): this {
-    this._params.includes = [];
-    this._params.sort = [];
-    this._params.limit = BrunoQuery.DEFAULT_LIMIT;
-    this._params.page = BrunoQuery.DEFAULT_PAGE;
-    this._params.filter_groups = [];
-    delete this._params.optional;
-
+    this._params = {};
     return this;
   }
 
@@ -261,27 +249,79 @@ export class BrunoQuery {
    */
   clone(): BrunoQuery {
     const clone = new BrunoQuery();
-    clone._params = {
-      includes: [...this._params.includes],
-      sort: this._params.sort.map((s: SortRule) => ({ ...s })),
-      limit: this._params.limit,
-      page: this._params.page,
-      filter_groups: this._params.filter_groups.map((group: FilterGroup) => ({
-        or: group.or || false,
-        filters: group.filters
-          ? group.filters.map((filter: any) =>
-              Array.isArray(filter) ? [...filter] : { ...filter }
-            )
-          : [],
-      })),
-      ...(this._params.optional && {
-        optional: Array.isArray(this._params.optional)
-          ? this._params.optional.map((obj) => ({ ...obj }))
-          : { ...this._params.optional },
-      }),
-    };
+    if (this._params.includes) clone._params.includes = [...this._params.includes];
+    if (this._params.sort) clone._params.sort = this._params.sort.map((s: Sort) => ({ ...s }));
+    if (this._params.limit) clone._params.limit = this._params.limit;
+    if (this._params.page) clone._params.page = this._params.page;
+    if (this._params.filter_groups) {
+      clone._params.filter_groups = this._params.filter_groups.map((group: FilterGroup) =>
+        this.deduplicateFilters({
+          or: group.or || false,
+          filters: group.filters
+            ? group.filters.map((filter: any) =>
+                Array.isArray(filter) ? [...filter] : { ...filter }
+              )
+            : [],
+        })
+      );
+    }
+    if (this._params.optional) {
+      clone._params.optional = Array.isArray(this._params.optional)
+        ? this._params.optional.map((obj) => ({ ...obj }))
+        : { ...this._params.optional };
+    }
 
     return clone;
+  }
+
+  /**
+   * Remove duplicate filters from a filter group based on key-value-operator-not combination
+   *
+   * @param group - Filter group to deduplicate
+   * @returns FilterGroup with duplicate filters removed
+   * @private
+   */
+  private deduplicateFilters(group: FilterGroup): FilterGroup {
+    if (!group.filters || group.filters.length === 0) {
+      return group;
+    }
+
+    const seen = new Set<string>();
+    const uniqueFilters: (Filter | FilterShorthand)[] = [];
+
+    for (const filter of group.filters) {
+      let key: string;
+      let value: any;
+      let operator: string | QueryOperator;
+      let not: boolean;
+
+      if (Array.isArray(filter)) {
+        // FilterShorthand format: [key, operator, value, not?]
+        key = filter[0];
+        operator = filter[1];
+        value = filter[2];
+        not = filter.length > 3 ? (filter[3] ?? false) : false;
+      } else {
+        // Filter object format
+        key = filter.key;
+        operator = filter.operator;
+        value = filter.value;
+        not = filter.not ?? false;
+      }
+
+      // Create a unique identifier for the key-value-operator-not combination
+      const identifier = `${key}:${operator}:${JSON.stringify(value)}:${not}`;
+
+      if (!seen.has(identifier)) {
+        seen.add(identifier);
+        uniqueFilters.push(filter);
+      }
+    }
+
+    return {
+      or: group.or || false,
+      filters: uniqueFilters
+    };
   }
 
   /**
@@ -290,31 +330,45 @@ export class BrunoQuery {
    * @returns Record<string, any>
    */
   toObject(): Record<string, any> {
-    const normalizeFilterGroups = this._params.filter_groups.map(
-      (group: FilterGroup) => ({
-        or: group.or || false,
-        filters: group.filters.map((filter: any) => {
-          if (Array.isArray(filter)) {
-            return {
-              key: filter[0],
-              operator: filter[1],
-              value: filter[2],
-              ...(filter.length > 3 ? { not: filter[3] } : {}),
-            };
-          }
-          return filter;
-        }),
-      })
-    );
+    const res: QueryParameter = {};
+    if (this._params.includes) {
+      res.includes = [...this._params.includes];
+    }
+    if (this._params.sort) {
+      res.sort = [...this._params.sort];
+    }
+    if (this._params.filter_groups) {
+      const normalizeFilterGroups = this._params.filter_groups.map((group: FilterGroup) => {
+        const normalizedGroup = {
+          or: group.or || false,
+          filters: group.filters.map((filter: any) => {
+            if (Array.isArray(filter)) {
+              return {
+                key: filter[0],
+                operator: filter[1],
+                value: filter[2],
+                ...(filter.length > 3 ? { not: filter[3] } : {}),
+              };
+            }
+            return filter;
+          }),
+        };
+        // Apply deduplication to the normalized group
+        return this.deduplicateFilters(normalizedGroup);
+      });
+      res.filter_groups = normalizeFilterGroups;
+    }
+    if (this._params.limit) {
+      res.limit = this._params.limit;
+    }
+    if (this._params.page) {
+      res.page = this._params.page;
+    }
+    if (this._params.optional) {
+      res.optional = this._params.optional;
+    }
 
-    return {
-      includes: [...this._params.includes],
-      sort: [...this._params.sort],
-      filter_groups: normalizeFilterGroups,
-      limit: this._params.limit,
-      page: this._params.page,
-      ...(this._params.optional && { optional: this._params.optional }),
-    };
+    return res;
   }
 
   /**
@@ -325,9 +379,7 @@ export class BrunoQuery {
    */
   toURL(baseUrl: string = ''): string {
     const queryString = this.toQueryString();
-    let fullUrl = `${baseUrl}${
-      baseUrl.includes('?') ? '&' : '?'
-    }${queryString}`;
+    let fullUrl = `${baseUrl}${baseUrl.endsWith('?') ? '&' : '?'}${queryString}`;
     fullUrl = fullUrl.replace(/&{2,}/g, '&');
     fullUrl = fullUrl.replace(/\?&/g, '?');
 
@@ -361,12 +413,41 @@ export class BrunoQuery {
   }
 
   /**
+   * Return the query parameters as a JSON string
+   * Optional parameters are flattened to the root level
+   *
+   * @returns string
+   */
+  toJSON(): string {
+    const obj = this.toObject();
+
+    // Flatten optional parameters to root level
+    if (obj.optional) {
+      if (Array.isArray(obj.optional)) {
+        // If optional is an array, merge all objects
+        obj.optional.forEach((item, index) => {
+          Object.keys(item).forEach(key => {
+            obj[`${key}_${index}`] = item[key];
+          });
+        });
+      } else {
+        // If optional is a single object, merge it
+        Object.assign(obj, obj.optional);
+      }
+      // Remove the optional property
+      delete obj.optional;
+    }
+
+    return JSON.stringify(obj);
+  }
+
+  /**
    * Handle the includes parameter
    *
    * @param queryParts - Array of query parts
    */
   private handleIncludes(queryParts: string[]): void {
-    if (this._params.includes.length === 0) return;
+    if (!this._params.includes || this._params.includes.length === 0) return;
 
     this._params.includes.forEach((include: string): void => {
       queryParts.push(`includes[]=${encodeURIComponent(include)}`);
@@ -379,9 +460,9 @@ export class BrunoQuery {
    * @param queryParts - Array of query parts
    */
   private handleSort(queryParts: string[]): void {
-    if (this._params.sort.length === 0) return;
+    if (!this._params.sort || this._params.sort.length === 0) return;
 
-    this._params.sort.forEach((sortRule: SortRule, index: number): void => {
+    this._params.sort.forEach((sortRule: Sort, index: number): void => {
       const key = `sort[${index}][key]=${encodeURIComponent(sortRule.key)}`;
       const direction = `sort[${index}][direction]=${sortRule.direction}`;
       queryParts.push(key, direction);
@@ -394,7 +475,8 @@ export class BrunoQuery {
    * @param queryParts - Array of query parts
    */
   private handleLimitPage(queryParts: string[]): void {
-    queryParts.push(`limit=${this._params.limit}`, `page=${this._params.page}`);
+    if (this._params.limit) queryParts.push(`limit=${this._params.limit}`);
+    if (this._params.page) queryParts.push(`page=${this._params.page}`);
   }
 
   /**
@@ -403,16 +485,14 @@ export class BrunoQuery {
    * @param queryParts - Array of query parts
    */
   private handleFilterGroups(queryParts: string[]): void {
-    if (this._params.filter_groups.length === 0) return;
+    if (!this._params.filter_groups || this._params.filter_groups.length === 0) return;
 
-    this._params.filter_groups.forEach(
-      (group: FilterGroup, groupIndex: number): void => {
-        if (group.or) {
-          queryParts.push(`filter_groups[${groupIndex}][or]=true`);
-        }
-        this.handleFilters(queryParts, group, groupIndex);
+    this._params.filter_groups.forEach((group: FilterGroup, groupIndex: number): void => {
+      if (group.or) {
+        queryParts.push(`filter_groups[${groupIndex}][or]=true`);
       }
-    );
+      this.handleFilters(queryParts, group, groupIndex);
+    });
   }
 
   /**
@@ -422,13 +502,9 @@ export class BrunoQuery {
    * @param group - Filter group
    * @param groupIndex - Index of the filter group
    */
-  private handleFilters(
-    queryParts: string[],
-    group: FilterGroup,
-    groupIndex: number
-  ): void {
+  private handleFilters(queryParts: string[], group: FilterGroup, groupIndex: number): void {
     const filters = group.filters || [];
-    filters.forEach((filter: any, filterIndex: number) => {
+    filters.forEach((filter: any, filterIndex: number): void => {
       const prefix = `filter_groups[${groupIndex}][filters][${filterIndex}]`;
       const parsedFilter = this.handleParseFilter(filter);
       Object.keys(parsedFilter).forEach((key: string): void => {
@@ -444,9 +520,7 @@ export class BrunoQuery {
    * @param filter - Filter to parse
    * @returns Filter|FilterShorthand
    */
-  private handleParseFilter(
-    filter: Filter | FilterShorthand
-  ): Filter | FilterShorthand {
+  private handleParseFilter(filter: Filter | FilterShorthand): Filter | FilterShorthand {
     let parsed: Filter | FilterShorthand;
     if (Array.isArray(filter)) {
       parsed = {
@@ -494,20 +568,11 @@ export class BrunoQuery {
   ): void {
     Object.keys(optionalObj).forEach((keyName: string): void => {
       const value = (optionalObj as any)[keyName];
-      if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         // Handle nested object
         Object.keys(value).forEach((nestedKey: string): void => {
           const nestedValue = (value as any)[nestedKey];
-          this.handleValue(
-            queryParts,
-            `${keyName}[${nestedKey}]`,
-            nestedValue,
-            index
-          );
+          this.handleValue(queryParts, `${keyName}[${nestedKey}]`, nestedValue, index);
         });
       } else {
         // Handle direct value
@@ -524,12 +589,7 @@ export class BrunoQuery {
    * @param value - Value
    * @param index - Index of the filter
    */
-  private handleValue(
-    queryParts: string[],
-    keyName: string,
-    value: any,
-    index: number
-  ): void {
+  private handleValue(queryParts: string[], keyName: string, value: any, index: number): void {
     if (Array.isArray(value)) {
       value.forEach((v: string | number | boolean | null): void => {
         // Push each value into the same key
@@ -559,16 +619,15 @@ export class BrunoQuery {
   static build(
     filterGroups: FilterGroup[] | null = null,
     includes: string[] | null = null,
-    sort: SortRule[] | null = null,
-    limit: number = BrunoQuery.DEFAULT_LIMIT,
-    page: number = BrunoQuery.DEFAULT_PAGE
+    sort: Sort[] | null = null,
+    limit: number | null = null,
+    page: number | null = null
   ): BrunoQuery {
     const instance = new BrunoQuery();
     instance.setLimit(limit).setPage(page);
     if (includes && includes.length) instance.addArrayIncludes(includes);
     if (sort && sort.length) instance.addArraySort(sort);
-    if (filterGroups && filterGroups.length)
-      instance.addArrayFilterGroup(filterGroups);
+    if (filterGroups && filterGroups.length) instance.addArrayFilterGroup(filterGroups);
 
     return instance;
   }
@@ -596,9 +655,7 @@ export class BrunoQuery {
     instance.reset();
 
     // Remove leading ? if present
-    const cleanQuery = queryString.startsWith('?')
-      ? queryString.slice(1)
-      : queryString;
+    const cleanQuery = queryString.startsWith('?') ? queryString.slice(1) : queryString;
     if (!cleanQuery) return instance;
 
     // Parse query string
@@ -610,6 +667,47 @@ export class BrunoQuery {
     instance.parseOptional(params);
 
     return instance;
+  }
+
+  /**
+   * Create BrunoQuery instance from JSON string
+   * Non-core parameters are moved to optional
+   *
+   * @param jsonString - JSON string to parse
+   * @returns BrunoQuery
+   */
+  static fromJSON(jsonString: string): BrunoQuery {
+    try {
+      const data = JSON.parse(jsonString);
+      const instance = new BrunoQuery();
+
+      // Core parameters that should be handled directly
+      const coreParams = ['includes', 'sort', 'filter_groups', 'limit', 'page'];
+
+      // Set core parameters
+      if (data.includes) instance.addArrayIncludes(data.includes);
+      if (data.sort) instance.addArraySort(data.sort);
+      if (data.limit !== undefined) instance.setLimit(data.limit);
+      if (data.page !== undefined) instance.setPage(data.page);
+      if (data.filter_groups) instance.addArrayFilterGroup(data.filter_groups);
+
+      // Move non-core parameters to optional
+      const optional: Record<string, any> = {};
+      Object.keys(data).forEach(key => {
+        if (coreParams.indexOf(key) === -1) {
+          optional[key] = data[key];
+        }
+      });
+
+      // Set optional parameters if any
+      if (Object.keys(optional).length > 0) {
+        instance.setOptional(optional);
+      }
+
+      return instance;
+    } catch (error) {
+      throw new Error(`Invalid JSON string: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
@@ -629,7 +727,7 @@ export class BrunoQuery {
    * @param params - URLSearchParams
    */
   private parseSort(params: URLSearchParams): void {
-    const sortRules: SortRule[] = [];
+    const sortRules: Sort[] = [];
     let sortIndex = 0;
     while (true) {
       const key = params.get(`sort[${sortIndex}][key]`);
@@ -638,10 +736,7 @@ export class BrunoQuery {
 
       sortRules.push({
         key,
-        direction:
-          direction.toUpperCase() === 'ASC'
-            ? SortDirection.ASC
-            : SortDirection.DESC,
+        direction: direction.toUpperCase() === 'ASC' ? SortDirection.ASC : SortDirection.DESC,
       });
       sortIndex++;
     }
@@ -693,9 +788,7 @@ export class BrunoQuery {
       const value = param.value;
       const key = param.key;
       // Match pattern: filter_groups[groupIndex][filters][filterIndex][property]
-      const match = key.match(
-        /^filter_groups\[(\d+)\]\[filters\]\[(\d+)\]\[([^\]]+)\]$/
-      );
+      const match = key.match(/^filter_groups\[(\d+)\]\[filters\]\[(\d+)\]\[([^\]]+)\]$/);
       if (match) {
         const [, groupIndexStr, filterIndexStr, property] = match;
         const groupIndex = parseInt(groupIndexStr, 10);
@@ -727,10 +820,7 @@ export class BrunoQuery {
 
       // Sắp xếp filters theo filter index
       const sortedFilterEntries = Object.keys(filtersMap as Record<number, any>)
-        .map((key) => [
-          key,
-          (filtersMap as Record<number, any>)[parseInt(key, 10)],
-        ])
+        .map((key) => [key, (filtersMap as Record<number, any>)[parseInt(key, 10)]])
         .sort(([a], [b]): number => {
           return parseInt(a as string, 10) - parseInt(b as string, 10);
         });
@@ -739,12 +829,7 @@ export class BrunoQuery {
       sortedFilterEntries.forEach(([filterIndexStr, filter]): void => {
         if (filter.key && filter.operator) {
           validFilters.push(
-            this.parseFilter(
-              filter.key,
-              filter.operator,
-              filter.value,
-              filter.not
-            )
+            this.parseFilter(filter.key, filter.operator, filter.value, filter.not)
           );
         }
       });
@@ -773,13 +858,7 @@ export class BrunoQuery {
     const optionalArray: Record<string, any>[] = [];
 
     // Get all keys that don't start with known prefixes
-    const knownPrefixes = [
-      'includes',
-      'sort',
-      'limit',
-      'page',
-      'filter_groups',
-    ];
+    const knownPrefixes: string[] = ['includes', 'sort', 'limit', 'page', 'filter_groups'];
     const optionalKeys: string[] = [];
     // Use iterator for URLSearchParams
     const entries = params.toString().split('&');
@@ -829,9 +908,7 @@ export class BrunoQuery {
         const indexMap: Record<number, Record<string, any>> = {};
 
         indexedKeys.forEach((key: string): void => {
-          const match = key.match(
-            new RegExp(`^${rootKey}\\[(\\d+)\\]\\[([^\\]]+)\\]`)
-          );
+          const match = key.match(new RegExp(`^${rootKey}\\[(\\d+)\\]\\[([^\\]]+)\\]`));
           if (match) {
             const [, indexStr, nestedKey] = match;
             const index = parseInt(indexStr, 10);
@@ -948,9 +1025,9 @@ export class BrunoQuery {
       ew: QueryOperator.endsWith,
       eq: QueryOperator.equals,
       gt: QueryOperator.greaterThan,
-      gte: QueryOperator.greaterThanOrEqual,
+      gte: QueryOperator.greaterThanEqual,
       lt: QueryOperator.lessThan,
-      lte: QueryOperator.lessThanOrEqual,
+      lte: QueryOperator.lessThanEqual,
       in: QueryOperator.in,
       bt: QueryOperator.between,
     };
@@ -965,11 +1042,7 @@ export class BrunoQuery {
    * @param path - Path like "address][city" or "name"
    * @param value - Value to set
    */
-  private setNestedValue(
-    obj: Record<string, any>,
-    path: string,
-    value: any
-  ): void {
+  private setNestedValue(obj: Record<string, any>, path: string, value: any): void {
     // Handle paths like "address][city" by splitting on "]["
     const keys = path.split('][');
     let current = obj;

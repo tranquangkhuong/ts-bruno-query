@@ -18,13 +18,13 @@ export enum QueryOperator {
   greaterThan = 'gt',
 
   /** Greater than or equalTo */
-  greaterThanOrEqual = 'gte',
+  greaterThanEqual = 'gte',
 
   /** Lesser than */
   lessThan = 'lt',
 
   /** Lesser than or equalTo */
-  lessThanOrEqual = 'lte',
+  lessThanEqual = 'lte',
 
   /** In array */
   in = 'in',
@@ -32,6 +32,11 @@ export enum QueryOperator {
   /** Between */
   between = 'bt',
 }
+
+/**
+ * Type for QueryOperator values (string literals)
+ */
+export type QueryOperatorValue = `${QueryOperator}`;
 
 /**
  * Sort direction
@@ -47,3 +52,8 @@ export enum SortDirection {
    */
   DESC = 'DESC',
 }
+
+/**
+ * Type for SortDirection values (string literals)
+ */
+export type SortDirectionValue = `${SortDirection}`;

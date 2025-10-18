@@ -1,9 +1,9 @@
-import { QueryOperator, SortDirection } from './enum';
+import { QueryOperator, QueryOperatorValue, SortDirection, SortDirectionValue } from './enum';
 
 /**
  * Sort rule
  */
-export interface SortRule {
+export interface Sort {
   /**
    * Property to sort by, e.g. 'name'
    *
@@ -14,10 +14,11 @@ export interface SortRule {
   /**
    * Direction to sort by, e.g. 'asc' or 'desc'
    *
-   * @type SortDirection | string
+   * @type SortDirection | SortDirectionValue
    * @see {@link SortDirection}
+   * @see {@link SortDirectionValue}
    */
-  direction: SortDirection | string;
+  direction: SortDirection | SortDirectionValue;
 }
 
 /**
@@ -41,10 +42,11 @@ export interface Filter {
   /**
    * Operator to use for the filter, e.g. 'eq'
    *
-   * @type QueryOperator | string
+   * @type QueryOperator | QueryOperatorValue
    * @see {@link QueryOperator}
+   * @see {@link QueryOperatorValue}
    */
-  operator: QueryOperator | string;
+  operator: QueryOperator | QueryOperatorValue;
 
   /**
    * Whether to negate the filter, e.g. 'not'
@@ -56,10 +58,11 @@ export interface Filter {
  * Shorthand for a filter
  *
  * @see {@link QueryOperator}
+ * @see {@link QueryOperatorValue}
  */
 export type FilterShorthand = [
   string, // key
-  QueryOperator | string, // operator
+  QueryOperator | QueryOperatorValue, // operator
   string | number | null, // value
   boolean | undefined // not
 ];
@@ -94,29 +97,15 @@ export interface QueryParameter {
    *
    * @type string[]
    */
-  includes: string[];
+  includes?: string[];
 
   /**
    * Property to sort by, e.g. 'title'
    *
-   * @type SortRule[]
-   * @see {@link SortRule}
+   * @type Sort[]
+   * @see {@link Sort}
    */
-  sort: SortRule[];
-
-  /**
-   * Limit of resources to return
-   *
-   * @type number
-   */
-  limit: number;
-
-  /**
-   * Page number. For use with limit. E.g. 1
-   *
-   * @type number
-   */
-  page: number;
+  sort?: Sort[];
 
   /**
    * Array of filter groups.
@@ -124,7 +113,7 @@ export interface QueryParameter {
    * @type FilterGroup[]
    * @see {@link FilterGroup}
    */
-  filter_groups: FilterGroup[];
+  filter_groups?: FilterGroup[];
 
   /**
    * Optional parameters. For use with custom endpoints.
@@ -135,4 +124,18 @@ export interface QueryParameter {
    * @see {@link Record}
    */
   optional?: Record<string, any> | Record<string, any>[];
+
+  /**
+   * Limit of resources to return
+   *
+   * @type number | null
+   */
+  limit?: number | null;
+
+  /**
+   * Page number. For use with limit. E.g. 1
+   *
+   * @type number | null
+   */
+  page?: number | null;
 }

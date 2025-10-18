@@ -13,16 +13,20 @@ declare enum QueryOperator {
     /** Greater than */
     greaterThan = "gt",
     /** Greater than or equalTo */
-    greaterThanOrEqual = "gte",
+    greaterThanEqual = "gte",
     /** Lesser than */
     lessThan = "lt",
     /** Lesser than or equalTo */
-    lessThanOrEqual = "lte",
+    lessThanEqual = "lte",
     /** In array */
     in = "in",
     /** Between */
     between = "bt"
 }
+/**
+ * Type for QueryOperator values (string literals)
+ */
+type QueryOperatorValue = `${QueryOperator}`;
 /**
  * Sort direction
  */
@@ -36,11 +40,15 @@ declare enum SortDirection {
      */
     DESC = "DESC"
 }
+/**
+ * Type for SortDirection values (string literals)
+ */
+type SortDirectionValue = `${SortDirection}`;
 
 /**
  * Sort rule
  */
-interface SortRule {
+interface Sort {
     /**
      * Property to sort by, e.g. 'name'
      *
@@ -50,10 +58,11 @@ interface SortRule {
     /**
      * Direction to sort by, e.g. 'asc' or 'desc'
      *
-     * @type SortDirection | string
+     * @type SortDirection | SortDirectionValue
      * @see {@link SortDirection}
+     * @see {@link SortDirectionValue}
      */
-    direction: SortDirection | string;
+    direction: SortDirection | SortDirectionValue;
 }
 /**
  * Filter for a single property
@@ -74,10 +83,11 @@ interface Filter {
     /**
      * Operator to use for the filter, e.g. 'eq'
      *
-     * @type QueryOperator | string
+     * @type QueryOperator | QueryOperatorValue
      * @see {@link QueryOperator}
+     * @see {@link QueryOperatorValue}
      */
-    operator: QueryOperator | string;
+    operator: QueryOperator | QueryOperatorValue;
     /**
      * Whether to negate the filter, e.g. 'not'
      */
@@ -87,11 +97,12 @@ interface Filter {
  * Shorthand for a filter
  *
  * @see {@link QueryOperator}
+ * @see {@link QueryOperatorValue}
  */
 type FilterShorthand = [
     string,
     // key
-    QueryOperator | string,
+    QueryOperator | QueryOperatorValue,
     // operator
     string | number | null,
     // value
@@ -125,33 +136,21 @@ interface QueryParameter {
      *
      * @type string[]
      */
-    includes: string[];
+    includes?: string[];
     /**
      * Property to sort by, e.g. 'title'
      *
-     * @type SortRule[]
-     * @see {@link SortRule}
+     * @type Sort[]
+     * @see {@link Sort}
      */
-    sort: SortRule[];
-    /**
-     * Limit of resources to return
-     *
-     * @type number
-     */
-    limit: number;
-    /**
-     * Page number. For use with limit. E.g. 1
-     *
-     * @type number
-     */
-    page: number;
+    sort?: Sort[];
     /**
      * Array of filter groups.
      *
      * @type FilterGroup[]
      * @see {@link FilterGroup}
      */
-    filter_groups: FilterGroup[];
+    filter_groups?: FilterGroup[];
     /**
      * Optional parameters. For use with custom endpoints.
      *
@@ -161,6 +160,18 @@ interface QueryParameter {
      * @see {@link Record}
      */
     optional?: Record<string, any> | Record<string, any>[];
+    /**
+     * Limit of resources to return
+     *
+     * @type number | null
+     */
+    limit?: number | null;
+    /**
+     * Page number. For use with limit. E.g. 1
+     *
+     * @type number | null
+     */
+    page?: number | null;
 }
 
 /**
@@ -211,33 +222,33 @@ declare class BrunoQuery {
      *
      * @param sort - Sort rules. E.g. `{ key: 'name', direction: SortDirection.ASC }`
      * @returns `this`
-     * @see {@link SortRule}
+     * @see {@link Sort}
      */
-    addSort(...sort: SortRule[]): this;
+    addSort(...sort: Sort[]): this;
     /**
      * Add sort rules to the query parameters from array
      *
      * @param sort - Array of sort rules. E.g. `[{ key: 'name', direction: SortDirection.ASC }]`
      * @returns `this`
-     * @see {@link SortRule}
+     * @see {@link Sort}
      */
-    addArraySort(sort: SortRule[]): this;
+    addArraySort(sort: Sort[]): this;
     /**
      * Set sort rules to the query parameters (replace existing)
      *
      * @param sort - Sort rules. E.g. `{ key: 'name', direction: SortDirection.ASC }`
      * @returns `this`
-     * @see {@link SortRule}
+     * @see {@link Sort}
      */
-    setSort(...sort: SortRule[]): this;
+    setSort(...sort: Sort[]): this;
     /**
      * Set sort rules to the query parameters from array (replace existing)
      *
      * @param sort - Array of sort rules. E.g. `[{ key: 'name', direction: SortDirection.ASC }]`
      * @returns `this`
-     * @see {@link SortRule}
+     * @see {@link Sort}
      */
-    setArraySort(sort: SortRule[]): this;
+    setArraySort(sort: Sort[]): this;
     /**
      * Add filter groups to the query parameters
      *
@@ -273,17 +284,17 @@ declare class BrunoQuery {
     /**
      * Set the limit of the query parameters
      *
-     * @param limit - Limit of resources to return
+     * @param limit - Limit of resources to return. If `null`, the limit parameter will be removed.
      * @returns `this`
      */
-    setLimit(limit: number): this;
+    setLimit(limit: number | null): this;
     /**
      * Set the page number of the query parameters
      *
-     * @param page - Page number
+     * @param page - Page number. If `null`, the page parameter will be removed.
      * @returns `this`
      */
-    setPage(page: number): this;
+    setPage(page: number | null): this;
     /**
      * Set optional parameters that are not available in BrunoQuery
      *
@@ -313,6 +324,14 @@ declare class BrunoQuery {
      */
     clone(): BrunoQuery;
     /**
+     * Remove duplicate filters from a filter group based on key-value-operator-not combination
+     *
+     * @param group - Filter group to deduplicate
+     * @returns FilterGroup with duplicate filters removed
+     * @private
+     */
+    private deduplicateFilters;
+    /**
      * Return the query parameters as an object
      *
      * @returns Record<string, any>
@@ -338,6 +357,13 @@ declare class BrunoQuery {
      * @returns string
      */
     get(): string;
+    /**
+     * Return the query parameters as a JSON string
+     * Optional parameters are flattened to the root level
+     *
+     * @returns string
+     */
+    toJSON(): string;
     /**
      * Handle the includes parameter
      *
@@ -410,7 +436,7 @@ declare class BrunoQuery {
      * @param page - Page number
      * @returns BrunoQuery
      */
-    static build(filterGroups?: FilterGroup[] | null, includes?: string[] | null, sort?: SortRule[] | null, limit?: number, page?: number): BrunoQuery;
+    static build(filterGroups?: FilterGroup[] | null, includes?: string[] | null, sort?: Sort[] | null, limit?: number | null, page?: number | null): BrunoQuery;
     /**
      * Parse query string and set parameters
      *
@@ -427,6 +453,14 @@ declare class BrunoQuery {
      * @returns `this`
      */
     static fromQueryString(queryString: string): BrunoQuery;
+    /**
+     * Create BrunoQuery instance from JSON string
+     * Non-core parameters are moved to optional
+     *
+     * @param jsonString - JSON string to parse
+     * @returns BrunoQuery
+     */
+    static fromJSON(jsonString: string): BrunoQuery;
     /**
      * Parse includes from URLSearchParams
      *
@@ -485,4 +519,4 @@ declare class BrunoQuery {
     private setNestedValue;
 }
 
-export { BrunoQuery, type Filter, type FilterGroup, type FilterShorthand, QueryOperator, type QueryParameter, SortDirection, type SortRule };
+export { BrunoQuery, Filter, FilterGroup, FilterShorthand, QueryOperator, QueryOperatorValue, QueryParameter, Sort, SortDirection, SortDirectionValue  };
