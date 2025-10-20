@@ -24,10 +24,6 @@ declare enum QueryOperator {
     between = "bt"
 }
 /**
- * Type for QueryOperator values (string literals)
- */
-type QueryOperatorValue = "ct" | "sw" | "ew" | "eq" | "gt" | "gte" | "lt" | "lte" | "in" | "bt";
-/**
  * Sort direction
  */
 declare enum SortDirection {
@@ -40,10 +36,6 @@ declare enum SortDirection {
      */
     DESC = "DESC"
 }
-/**
- * Type for SortDirection values (string literals)
- */
-type SortDirectionValue = "ASC" | "DESC";
 
 /**
  * Sort rule
@@ -58,11 +50,10 @@ interface Sort {
     /**
      * Direction to sort by, e.g. 'asc' or 'desc'
      *
-     * @type SortDirection | SortDirectionValue
+     * @type SortDirection
      * @see {@link SortDirection}
-     * @see {@link SortDirectionValue}
      */
-    direction: SortDirection | SortDirectionValue;
+    direction: SortDirection | string;
 }
 /**
  * Filter for a single property
@@ -83,11 +74,10 @@ interface Filter {
     /**
      * Operator to use for the filter, e.g. 'eq'
      *
-     * @type QueryOperator | QueryOperatorValue
+     * @type QueryOperator
      * @see {@link QueryOperator}
-     * @see {@link QueryOperatorValue}
      */
-    operator: QueryOperator | QueryOperatorValue;
+    operator: QueryOperator | string;
     /**
      * Whether to negate the filter, e.g. 'not'
      */
@@ -97,12 +87,11 @@ interface Filter {
  * Shorthand for a filter
  *
  * @see {@link QueryOperator}
- * @see {@link QueryOperatorValue}
  */
 type FilterShorthand = [
     string,
     // key
-    QueryOperator | QueryOperatorValue,
+    QueryOperator | string,
     // operator
     string | number | null,
     // value
@@ -519,4 +508,4 @@ declare class BrunoQuery {
     private setNestedValue;
 }
 
-export { BrunoQuery, Filter, FilterGroup, FilterShorthand, QueryOperator, QueryOperatorValue, QueryParameter, Sort, SortDirection, SortDirectionValue  };
+export { BrunoQuery, Filter, FilterGroup, FilterShorthand, QueryOperator, QueryParameter, Sort, SortDirection  };

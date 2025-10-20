@@ -1,4 +1,4 @@
-import { QueryOperator, QueryOperatorValue, SortDirection, SortDirectionValue } from "./enum";
+import { QueryOperator, SortDirection } from "./enum";
 
 /**
  * Sort rule
@@ -14,11 +14,10 @@ export interface Sort {
   /**
    * Direction to sort by, e.g. 'asc' or 'desc'
    *
-   * @type SortDirection | SortDirectionValue
+   * @type SortDirection
    * @see {@link SortDirection}
-   * @see {@link SortDirectionValue}
    */
-  direction: SortDirection | SortDirectionValue;
+  direction: SortDirection | string;
 }
 
 /**
@@ -42,11 +41,10 @@ export interface Filter {
   /**
    * Operator to use for the filter, e.g. 'eq'
    *
-   * @type QueryOperator | QueryOperatorValue
+   * @type QueryOperator
    * @see {@link QueryOperator}
-   * @see {@link QueryOperatorValue}
    */
-  operator: QueryOperator | QueryOperatorValue;
+  operator: QueryOperator | string;
 
   /**
    * Whether to negate the filter, e.g. 'not'
@@ -58,11 +56,10 @@ export interface Filter {
  * Shorthand for a filter
  *
  * @see {@link QueryOperator}
- * @see {@link QueryOperatorValue}
  */
 export type FilterShorthand = [
   string, // key
-  QueryOperator | QueryOperatorValue, // operator
+  QueryOperator | string, // operator
   string | number | null, // value
   boolean | undefined // not
 ];

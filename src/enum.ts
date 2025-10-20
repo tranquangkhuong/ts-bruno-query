@@ -34,11 +34,6 @@ export enum QueryOperator {
 }
 
 /**
- * Type for QueryOperator values (string literals)
- */
-export type QueryOperatorValue = "ct" | "sw" | "ew" | "eq" | "gt" | "gte" | "lt" | "lte" | "in" | "bt";
-
-/**
  * Sort direction
  */
 export enum SortDirection {
@@ -52,8 +47,3 @@ export enum SortDirection {
    */
   DESC = "DESC",
 }
-
-/**
- * Type for SortDirection values (string literals)
- */
-export type SortDirectionValue = "ASC" | "DESC";
