@@ -169,8 +169,8 @@ interface QueryParameter {
  * @see {@link https://github.com/esbenp/bruno}
  */
 declare class BrunoQuery {
-    static readonly DEFAULT_LIMIT = 15;
-    static readonly DEFAULT_PAGE = 1;
+    static DEFAULT_LIMIT: number;
+    static DEFAULT_PAGE: number;
     /**
      * Private data for the query parameters
      *

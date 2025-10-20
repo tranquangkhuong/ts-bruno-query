@@ -11,8 +11,8 @@ export * from "./interface";
  * @see {@link https://github.com/esbenp/bruno}
  */
 export class BrunoQuery {
-  public static readonly DEFAULT_LIMIT = 15;
-  public static readonly DEFAULT_PAGE = 1;
+  public static DEFAULT_LIMIT = 15;
+  public static DEFAULT_PAGE = 1;
 
   /**
    * Private data for the query parameters
