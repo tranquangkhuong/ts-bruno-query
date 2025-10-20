@@ -3,40 +3,40 @@
  */
 export enum QueryOperator {
   /** String contains */
-  contains = 'ct',
+  contains = "ct",
 
   /** Starts with */
-  startsWith = 'sw',
+  startsWith = "sw",
 
   /** Ends with */
-  endsWith = 'ew',
+  endsWith = "ew",
 
   /** Equals/Exact match */
-  equals = 'eq',
+  equals = "eq",
 
   /** Greater than */
-  greaterThan = 'gt',
+  greaterThan = "gt",
 
   /** Greater than or equalTo */
-  greaterThanEqual = 'gte',
+  greaterThanEqual = "gte",
 
   /** Lesser than */
-  lessThan = 'lt',
+  lessThan = "lt",
 
   /** Lesser than or equalTo */
-  lessThanEqual = 'lte',
+  lessThanEqual = "lte",
 
   /** In array */
-  in = 'in',
+  in = "in",
 
   /** Between */
-  between = 'bt',
+  between = "bt",
 }
 
 /**
  * Type for QueryOperator values (string literals)
  */
-export type QueryOperatorValue = `${QueryOperator}`;
+export type QueryOperatorValue = "ct" | "sw" | "ew" | "eq" | "gt" | "gte" | "lt" | "lte" | "in" | "bt";
 
 /**
  * Sort direction
@@ -45,15 +45,15 @@ export enum SortDirection {
   /**
    * Sort in ascending order
    */
-  ASC = 'ASC',
+  ASC = "ASC",
 
   /**
    * Sort in descending order
    */
-  DESC = 'DESC',
+  DESC = "DESC",
 }
 
 /**
  * Type for SortDirection values (string literals)
  */
-export type SortDirectionValue = `${SortDirection}`;
+export type SortDirectionValue = "ASC" | "DESC";

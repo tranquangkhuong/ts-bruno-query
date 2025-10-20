@@ -1,4 +1,4 @@
-import { QueryOperator, QueryOperatorValue, SortDirection, SortDirectionValue } from './enum';
+import { QueryOperator, QueryOperatorValue, SortDirection, SortDirectionValue } from "./enum";
 
 /**
  * Sort rule

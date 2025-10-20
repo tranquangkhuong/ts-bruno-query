@@ -1,9 +1,9 @@
-import { QueryOperator, SortDirection } from './enum';
-import { Filter, FilterGroup, FilterShorthand, QueryParameter, Sort } from './interface';
+import { QueryOperator, SortDirection } from "./enum";
+import { Filter, FilterGroup, FilterShorthand, QueryParameter, Sort } from "./interface";
 
 // Re-export enums and interfaces for external use
-export * from './enum';
-export * from './interface';
+export * from "./enum";
+export * from "./interface";
 
 /**
  * Query Builder for Bruno Library in PHP
@@ -134,7 +134,7 @@ export class BrunoQuery {
     if (!this._params.filter_groups) this._params.filter_groups = [];
 
     // Process each group to remove duplicate filters
-    const processedGroups = groups.map(group => this.deduplicateFilters(group));
+    const processedGroups = groups.map((group) => this.deduplicateFilters(group));
     this._params.filter_groups.push(...processedGroups);
     return this;
   }
@@ -159,7 +159,7 @@ export class BrunoQuery {
    */
   setArrayFilterGroup(groups: FilterGroup[]): this {
     // Process each group to remove duplicate filters
-    this._params.filter_groups = groups.map(group => this.deduplicateFilters(group));
+    this._params.filter_groups = groups.map((group) => this.deduplicateFilters(group));
     return this;
   }
 
@@ -258,9 +258,7 @@ export class BrunoQuery {
         this.deduplicateFilters({
           or: group.or || false,
           filters: group.filters
-            ? group.filters.map((filter: any) =>
-                Array.isArray(filter) ? [...filter] : { ...filter }
-              )
+            ? group.filters.map((filter: any) => (Array.isArray(filter) ? [...filter] : { ...filter }))
             : [],
         })
       );
@@ -300,7 +298,7 @@ export class BrunoQuery {
         key = filter[0];
         operator = filter[1];
         value = filter[2];
-        not = filter.length > 3 ? (filter[3] ?? false) : false;
+        not = filter.length > 3 ? filter[3] ?? false : false;
       } else {
         // Filter object format
         key = filter.key;
@@ -320,7 +318,7 @@ export class BrunoQuery {
 
     return {
       or: group.or || false,
-      filters: uniqueFilters
+      filters: uniqueFilters,
     };
   }
 
@@ -377,11 +375,11 @@ export class BrunoQuery {
    * @param baseUrl - Base URL to append the query parameters to
    * @returns string
    */
-  toURL(baseUrl: string = ''): string {
+  toURL(baseUrl: string = ""): string {
     const queryString = this.toQueryString();
-    let fullUrl = `${baseUrl}${baseUrl.endsWith('?') ? '&' : '?'}${queryString}`;
-    fullUrl = fullUrl.replace(/&{2,}/g, '&');
-    fullUrl = fullUrl.replace(/\?&/g, '?');
+    let fullUrl = `${baseUrl}${baseUrl.endsWith("?") ? "&" : "?"}${queryString}`;
+    fullUrl = fullUrl.replace(/&{2,}/g, "&");
+    fullUrl = fullUrl.replace(/\?&/g, "?");
 
     return fullUrl;
   }
@@ -399,7 +397,7 @@ export class BrunoQuery {
     this.handleLimitPage(queryParts);
     this.handleOptional(queryParts);
 
-    return queryParts.join('&');
+    return queryParts.join("&");
   }
 
   /**
@@ -426,7 +424,7 @@ export class BrunoQuery {
       if (Array.isArray(obj.optional)) {
         // If optional is an array, merge all objects
         obj.optional.forEach((item, index) => {
-          Object.keys(item).forEach(key => {
+          Object.keys(item).forEach((key) => {
             obj[`${key}_${index}`] = item[key];
           });
         });
@@ -561,14 +559,10 @@ export class BrunoQuery {
    * @param optionalObj - Optional object
    * @param index - Index of the optional object
    */
-  private handleOptionalObject(
-    queryParts: string[],
-    optionalObj: Record<string, any>,
-    index: number
-  ): void {
+  private handleOptionalObject(queryParts: string[], optionalObj: Record<string, any>, index: number): void {
     Object.keys(optionalObj).forEach((keyName: string): void => {
       const value = (optionalObj as any)[keyName];
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
         // Handle nested object
         Object.keys(value).forEach((nestedKey: string): void => {
           const nestedValue = (value as any)[nestedKey];
@@ -593,15 +587,15 @@ export class BrunoQuery {
     if (Array.isArray(value)) {
       value.forEach((v: string | number | boolean | null): void => {
         // Push each value into the same key
-        let val = v === null ? 'null' : v;
+        let val = v === null ? "null" : v;
         queryParts.push(`${keyName}[]=${encodeURIComponent(String(val))}`);
       });
     } else if (value === null) {
       queryParts.push(`${keyName}=null`);
-    } else if (typeof value === 'boolean') {
-      queryParts.push(`${keyName}=${value ? 'true' : 'false'}`);
+    } else if (typeof value === "boolean") {
+      queryParts.push(`${keyName}=${value ? "true" : "false"}`);
     } else {
-      let val = value === null ? 'null' : value;
+      let val = value === null ? "null" : value;
       queryParts.push(`${keyName}=${encodeURIComponent(val)}`);
     }
   }
@@ -655,7 +649,7 @@ export class BrunoQuery {
     instance.reset();
 
     // Remove leading ? if present
-    const cleanQuery = queryString.startsWith('?') ? queryString.slice(1) : queryString;
+    const cleanQuery = queryString.startsWith("?") ? queryString.slice(1) : queryString;
     if (!cleanQuery) return instance;
 
     // Parse query string
@@ -682,7 +676,7 @@ export class BrunoQuery {
       const instance = new BrunoQuery();
 
       // Core parameters that should be handled directly
-      const coreParams = ['includes', 'sort', 'filter_groups', 'limit', 'page'];
+      const coreParams = ["includes", "sort", "filter_groups", "limit", "page"];
 
       // Set core parameters
       if (data.includes) instance.addArrayIncludes(data.includes);
@@ -693,7 +687,7 @@ export class BrunoQuery {
 
       // Move non-core parameters to optional
       const optional: Record<string, any> = {};
-      Object.keys(data).forEach(key => {
+      Object.keys(data).forEach((key) => {
         if (coreParams.indexOf(key) === -1) {
           optional[key] = data[key];
         }
@@ -706,7 +700,7 @@ export class BrunoQuery {
 
       return instance;
     } catch (error) {
-      throw new Error(`Invalid JSON string: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Invalid JSON string: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -716,7 +710,7 @@ export class BrunoQuery {
    * @param params - URLSearchParams
    */
   private parseIncludes(params: URLSearchParams): void {
-    const includes = params.getAll('includes[]');
+    const includes = params.getAll("includes[]");
     if (includes.length == 0) return;
     this.addIncludes(...includes);
   }
@@ -736,7 +730,7 @@ export class BrunoQuery {
 
       sortRules.push({
         key,
-        direction: direction.toUpperCase() === 'ASC' ? SortDirection.ASC : SortDirection.DESC,
+        direction: direction.toUpperCase() === "ASC" ? SortDirection.ASC : SortDirection.DESC,
       });
       sortIndex++;
     }
@@ -750,12 +744,12 @@ export class BrunoQuery {
    * @param params - URLSearchParams
    */
   private parseLimitPage(params: URLSearchParams): void {
-    const limit = params.get('limit');
+    const limit = params.get("limit");
     if (limit) {
       this.setLimit(parseInt(limit, 10));
     }
 
-    const page = params.get('page');
+    const page = params.get("page");
     if (page) {
       this.setPage(parseInt(page, 10));
     }
@@ -774,13 +768,13 @@ export class BrunoQuery {
     // Convert URLSearchParams to array for ES5 compatibility
     const paramArray: Array<{ key: string; value: string }> = [];
     // Use iterator for URLSearchParams
-    const entries = params.toString().split('&');
+    const entries = params.toString().split("&");
     entries.forEach((entry: string): void => {
       if (entry) {
-        const [key, value] = entry.split('=');
+        const [key, value] = entry.split("=");
         paramArray.push({
           key: decodeURIComponent(key),
-          value: decodeURIComponent(value || ''),
+          value: decodeURIComponent(value || ""),
         });
       }
     });
@@ -828,14 +822,12 @@ export class BrunoQuery {
       // Lọc ra các filter hợp lệ (có key và operator)
       sortedFilterEntries.forEach(([filterIndexStr, filter]): void => {
         if (filter.key && filter.operator) {
-          validFilters.push(
-            this.parseFilter(filter.key, filter.operator, filter.value, filter.not)
-          );
+          validFilters.push(this.parseFilter(filter.key, filter.operator, filter.value, filter.not));
         }
       });
 
       if (validFilters.length > 0) {
-        const or = params.get(`filter_groups[${groupIndex}][or]`) === 'true';
+        const or = params.get(`filter_groups[${groupIndex}][or]`) === "true";
         filterGroups.push({
           or,
           filters: validFilters,
@@ -858,15 +850,15 @@ export class BrunoQuery {
     const optionalArray: Record<string, any>[] = [];
 
     // Get all keys that don't start with known prefixes
-    const knownPrefixes: string[] = ['includes', 'sort', 'limit', 'page', 'filter_groups'];
+    const knownPrefixes: string[] = ["includes", "sort", "limit", "page", "filter_groups"];
     const optionalKeys: string[] = [];
     // Use iterator for URLSearchParams
-    const entries = params.toString().split('&');
+    const entries = params.toString().split("&");
     entries.forEach((entry: string): void => {
       if (entry) {
-        const [key] = entry.split('=');
+        const [key] = entry.split("=");
         const decodedKey = decodeURIComponent(key);
-        const prefix = decodedKey.split('[')[0];
+        const prefix = decodedKey.split("[")[0];
         if (knownPrefixes.indexOf(prefix) === -1) {
           optionalKeys.push(decodedKey);
         }
@@ -876,7 +868,7 @@ export class BrunoQuery {
     // Group keys by their root key
     const keyGroups: Record<string, string[]> = {};
     optionalKeys.forEach((key: string): void => {
-      const rootKey = key.split('[')[0];
+      const rootKey = key.split("[")[0];
       if (!keyGroups[rootKey]) {
         keyGroups[rootKey] = [];
       }
@@ -898,9 +890,7 @@ export class BrunoQuery {
       }
 
       // Check if this root key has indexed parameters (array format)
-      const indexedKeys = keys.filter(
-        (key): boolean => !!key.match(new RegExp(`^${rootKey}\\[\\d+\\]`))
-      );
+      const indexedKeys = keys.filter((key): boolean => !!key.match(new RegExp(`^${rootKey}\\[\\d+\\]`)));
 
       if (indexedKeys.length > 0) {
         // Handle array format like optional[0][key]=name&optional[0][value]=John
@@ -981,17 +971,12 @@ export class BrunoQuery {
    * @param not - Filter not
    * @returns Filter
    */
-  private parseFilter(
-    key: string,
-    operator: string | null,
-    value: string | null,
-    not: string | null
-  ): Filter {
+  private parseFilter(key: string, operator: string | null, value: string | null, not: string | null): Filter {
     const filter: Filter = {
       key,
       operator: this.parseOperator(operator),
       value: this.parseValue(value),
-      ...(not === 'true' && { not: true }),
+      ...(not === "true" && { not: true }),
     };
 
     return filter;
@@ -1001,13 +986,13 @@ export class BrunoQuery {
    * Parse value from string to appropriate type
    */
   private parseValue(value: string | null): any {
-    if (value === null || value === 'null') return null;
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === null || value === "null") return null;
+    if (value === "true") return true;
+    if (value === "false") return false;
 
     // Try to parse as number
     const num = parseFloat(value);
-    if (!isNaN(num) && value !== '') return num;
+    if (!isNaN(num) && value !== "") return num;
 
     return value;
   }
@@ -1044,12 +1029,12 @@ export class BrunoQuery {
    */
   private setNestedValue(obj: Record<string, any>, path: string, value: any): void {
     // Handle paths like "address][city" by splitting on "]["
-    const keys = path.split('][');
+    const keys = path.split("][");
     let current = obj;
 
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
-      if (!current[key] || typeof current[key] !== 'object') {
+      if (!current[key] || typeof current[key] !== "object") {
         current[key] = {};
       }
       current = current[key];

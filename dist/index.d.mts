@@ -26,7 +26,7 @@ declare enum QueryOperator {
 /**
  * Type for QueryOperator values (string literals)
  */
-type QueryOperatorValue = `${QueryOperator}`;
+type QueryOperatorValue = "ct" | "sw" | "ew" | "eq" | "gt" | "gte" | "lt" | "lte" | "in" | "bt";
 /**
  * Sort direction
  */
@@ -43,7 +43,7 @@ declare enum SortDirection {
 /**
  * Type for SortDirection values (string literals)
  */
-type SortDirectionValue = `${SortDirection}`;
+type SortDirectionValue = "ASC" | "DESC";
 
 /**
  * Sort rule

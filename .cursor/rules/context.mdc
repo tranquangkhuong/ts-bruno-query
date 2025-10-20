@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+
+- Always ensure the code can run on Typescript 2.0 or higher to the latest version
+- Always follow .editorconfig
