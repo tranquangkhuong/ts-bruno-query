@@ -321,6 +321,14 @@ declare class BrunoQuery {
      */
     private deduplicateFilters;
     /**
+     * Remove duplicate sort rules based on key, keeping only the last occurrence
+     *
+     * @param sortRules - Array of sort rules to deduplicate
+     * @returns Array of unique sort rules with duplicates removed
+     * @private
+     */
+    private deduplicateSort;
+    /**
      * Return the query parameters as an object
      *
      * @returns Record<string, any>

@@ -86,6 +86,8 @@ export class BrunoQuery {
   addArraySort(sort: Sort[]): this {
     if (!this._params.sort) this._params.sort = [];
     this._params.sort.push(...sort);
+    // Deduplicate sort rules, keeping the last occurrence of each key
+    this._params.sort = this.deduplicateSort(this._params.sort);
     return this;
   }
 
@@ -108,7 +110,7 @@ export class BrunoQuery {
    * @see {@link Sort}
    */
   setArraySort(sort: Sort[]): this {
-    this._params.sort = [...sort];
+    this._params.sort = this.deduplicateSort([...sort]);
     return this;
   }
 
@@ -250,7 +252,7 @@ export class BrunoQuery {
   clone(): BrunoQuery {
     const clone = new BrunoQuery();
     if (this._params.includes) clone._params.includes = [...this._params.includes];
-    if (this._params.sort) clone._params.sort = this._params.sort.map((s: Sort) => ({ ...s }));
+    if (this._params.sort) clone._params.sort = this.deduplicateSort(this._params.sort.map((s: Sort) => ({ ...s })));
     if (this._params.limit) clone._params.limit = this._params.limit;
     if (this._params.page) clone._params.page = this._params.page;
     if (this._params.filter_groups) {
@@ -323,6 +325,33 @@ export class BrunoQuery {
   }
 
   /**
+   * Remove duplicate sort rules based on key, keeping only the last occurrence
+   *
+   * @param sortRules - Array of sort rules to deduplicate
+   * @returns Array of unique sort rules with duplicates removed
+   * @private
+   */
+  private deduplicateSort(sortRules: Sort[]): Sort[] {
+    if (!sortRules || sortRules.length === 0) {
+      return sortRules;
+    }
+
+    const seen = new Set<string>();
+    const result: Sort[] = [];
+
+    // Process from right to left, keeping only the first occurrence of each key (which is the last in original order)
+    for (let i = sortRules.length - 1; i >= 0; i--) {
+      const sortRule = sortRules[i];
+      if (!seen.has(sortRule.key)) {
+        seen.add(sortRule.key);
+        result.unshift(sortRule); // Add to beginning to maintain order
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Return the query parameters as an object
    *
    * @returns Record<string, any>
@@ -333,7 +362,7 @@ export class BrunoQuery {
       res.includes = [...this._params.includes];
     }
     if (this._params.sort) {
-      res.sort = [...this._params.sort];
+      res.sort = this.deduplicateSort([...this._params.sort]);
     }
     if (this._params.filter_groups) {
       const normalizeFilterGroups = this._params.filter_groups.map((group: FilterGroup) => {
