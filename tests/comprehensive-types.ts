@@ -7,11 +7,9 @@ import {
     FilterGroup,
     FilterShorthand,
     QueryOperator,
-    QueryOperatorValue,
     QueryParameter,
     Sort,
-    SortDirection,
-    SortDirectionValue
+    SortDirection
 } from '../dist/index';
 
 // Test type definitions
@@ -23,9 +21,9 @@ const testTypes = () => {
   const operator: QueryOperator = QueryOperator.contains;
   const direction: SortDirection = SortDirection.ASC;
 
-  // Test type aliases
-  const operatorValue: QueryOperatorValue = 'ct';
-  const directionValue: SortDirectionValue = 'ASC';
+  // Test type aliases (as string values)
+  const operatorValue: string = 'ct';
+  const directionValue: string = 'ASC';
 
   // Test interfaces
   const filter: Filter = {

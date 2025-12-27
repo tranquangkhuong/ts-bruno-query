@@ -130,6 +130,22 @@ export interface QueryParameter {
   limit?: number | null;
 
   /**
+   * Offset of resources to return
+   *
+   * @type number | null
+   */
+  offset?: number | null;
+
+  /**
+   * Per page of resources to return
+   *
+   * Same as limit, but different name
+   *
+   * @type number | null
+   */
+  perPage?: number | null;
+
+  /**
    * Page number. For use with limit. E.g. 1
    *
    * @type number | null

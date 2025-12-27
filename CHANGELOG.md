@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-12-27
+### Added
+- Add alias keys for pagination parameters
+
+### Changed
+- Changed `limit`, `offset`, `perPage`, `page` to use alias keys
+
 ## [1.0.7] - 2025-10-20
 ### Fixed
 - Fix sort deduplication

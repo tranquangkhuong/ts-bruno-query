@@ -156,6 +156,20 @@ interface QueryParameter {
      */
     limit?: number | null;
     /**
+     * Offset of resources to return
+     *
+     * @type number | null
+     */
+    offset?: number | null;
+    /**
+     * Per page of resources to return
+     *
+     * Same as limit, but different name
+     *
+     * @type number | null
+     */
+    perPage?: number | null;
+    /**
      * Page number. For use with limit. E.g. 1
      *
      * @type number | null
@@ -171,6 +185,10 @@ interface QueryParameter {
 declare class BrunoQuery {
     static DEFAULT_LIMIT: number;
     static DEFAULT_PAGE: number;
+    /**
+     * Alias keys pagination for the query parameters
+     */
+    private _aliasKeysPagination;
     /**
      * Private data for the query parameters
      *
@@ -274,16 +292,34 @@ declare class BrunoQuery {
      * Set the limit of the query parameters
      *
      * @param limit - Limit of resources to return. If `null`, the limit parameter will be removed.
+     * @param alias - Alias key for the limit parameter. If provided, the limit parameter will be set to the alias key.
      * @returns `this`
      */
-    setLimit(limit: number | null): this;
+    setLimit(limit: number | null, alias?: string): this;
+    /**
+     * Set the offset of the query parameters
+     *
+     * @param offset - Offset of resources to return. If `null`, the offset parameter will be removed.
+     * @param alias - Alias key for the offset parameter. If provided, the offset parameter will be set to the alias key.
+     * @returns `this`
+     */
+    setOffset(offset: number | null, alias?: string): this;
+    /**
+     * Set the per page of the query parameters
+     *
+     * @param perPage - Per page of resources to return. If `null`, the per page parameter will be removed.
+     * @param alias - Alias key for the per page parameter. If provided, the per page parameter will be set to the alias key.
+     * @returns `this`
+     */
+    setPerPage(perPage: number | null, alias?: string): this;
     /**
      * Set the page number of the query parameters
      *
      * @param page - Page number. If `null`, the page parameter will be removed.
+     * @param alias - Alias key for the page parameter. If provided, the page parameter will be set to the alias key.
      * @returns `this`
      */
-    setPage(page: number | null): this;
+    setPage(page: number | null, alias?: string): this;
     /**
      * Set optional parameters that are not available in BrunoQuery
      *

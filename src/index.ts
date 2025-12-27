@@ -15,6 +15,16 @@ export class BrunoQuery {
   public static DEFAULT_PAGE = 1;
 
   /**
+   * Alias keys pagination for the query parameters
+   */
+  private _aliasKeysPagination: Record<string, any> = {
+    limit: null,
+    offset: null,
+    perPage: null,
+    page: null,
+  };
+
+  /**
    * Private data for the query parameters
    *
    * @type QueryParameter
@@ -169,14 +179,56 @@ export class BrunoQuery {
    * Set the limit of the query parameters
    *
    * @param limit - Limit of resources to return. If `null`, the limit parameter will be removed.
+   * @param alias - Alias key for the limit parameter. If provided, the limit parameter will be set to the alias key.
    * @returns `this`
    */
-  setLimit(limit: number | null): this {
+  setLimit(limit: number | null, alias?: string): this {
     if (limit === null) {
       delete this._params.limit;
       return this;
     }
     this._params.limit = limit < 0 ? BrunoQuery.DEFAULT_LIMIT : limit;
+    if (alias) {
+      this._aliasKeysPagination.limit = alias;
+    }
+    return this;
+  }
+
+  /**
+   * Set the offset of the query parameters
+   *
+   * @param offset - Offset of resources to return. If `null`, the offset parameter will be removed.
+   * @param alias - Alias key for the offset parameter. If provided, the offset parameter will be set to the alias key.
+   * @returns `this`
+   */
+  setOffset(offset: number | null, alias?: string): this {
+    if (offset === null) {
+      delete this._params.offset;
+      return this;
+    }
+    this._params.offset = offset < 0 ? BrunoQuery.DEFAULT_PAGE : offset;
+    if (alias) {
+      this._aliasKeysPagination.offset = alias;
+    }
+    return this;
+  }
+
+  /**
+   * Set the per page of the query parameters
+   *
+   * @param perPage - Per page of resources to return. If `null`, the per page parameter will be removed.
+   * @param alias - Alias key for the per page parameter. If provided, the per page parameter will be set to the alias key.
+   * @returns `this`
+   */
+  setPerPage(perPage: number | null, alias?: string): this {
+    if (perPage === null) {
+      delete this._params.perPage;
+      return this;
+    }
+    this._params.perPage = perPage < 0 ? BrunoQuery.DEFAULT_LIMIT : perPage;
+    if (alias) {
+      this._aliasKeysPagination.perPage = alias;
+    }
     return this;
   }
 
@@ -184,14 +236,18 @@ export class BrunoQuery {
    * Set the page number of the query parameters
    *
    * @param page - Page number. If `null`, the page parameter will be removed.
+   * @param alias - Alias key for the page parameter. If provided, the page parameter will be set to the alias key.
    * @returns `this`
    */
-  setPage(page: number | null): this {
+  setPage(page: number | null, alias?: string): this {
     if (page === null) {
       delete this._params.page;
       return this;
     }
     this._params.page = page < 0 ? BrunoQuery.DEFAULT_PAGE : page;
+    if (alias) {
+      this._aliasKeysPagination.page = alias;
+    }
     return this;
   }
 
@@ -241,6 +297,12 @@ export class BrunoQuery {
    */
   reset(): this {
     this._params = {};
+    this._aliasKeysPagination = {
+      limit: null,
+      offset: null,
+      perPage: null,
+      page: null,
+    };
     return this;
   }
 
@@ -254,6 +316,8 @@ export class BrunoQuery {
     if (this._params.includes) clone._params.includes = [...this._params.includes];
     if (this._params.sort) clone._params.sort = this.deduplicateSort(this._params.sort.map((s: Sort) => ({ ...s })));
     if (this._params.limit) clone._params.limit = this._params.limit;
+    if (this._params.offset) clone._params.offset = this._params.offset;
+    if (this._params.perPage) clone._params.perPage = this._params.perPage;
     if (this._params.page) clone._params.page = this._params.page;
     if (this._params.filter_groups) {
       clone._params.filter_groups = this._params.filter_groups.map((group: FilterGroup) =>
@@ -270,6 +334,9 @@ export class BrunoQuery {
         ? this._params.optional.map((obj) => ({ ...obj }))
         : { ...this._params.optional };
     }
+
+    // Clone alias keys pagination
+    clone._aliasKeysPagination = { ...this._aliasKeysPagination };
 
     return clone;
   }
@@ -386,10 +453,32 @@ export class BrunoQuery {
       res.filter_groups = normalizeFilterGroups;
     }
     if (this._params.limit) {
-      res.limit = this._params.limit;
+      if (this._aliasKeysPagination.limit) {
+        res[this._aliasKeysPagination.limit] = this._params.limit;
+      } else {
+        res.limit = this._params.limit;
+      }
+    }
+    if (this._params.offset) {
+      if (this._aliasKeysPagination.offset) {
+        res[this._aliasKeysPagination.offset] = this._params.offset;
+      } else {
+        res.offset = this._params.offset;
+      }
+    }
+    if (this._params.perPage) {
+      if (this._aliasKeysPagination.perPage) {
+        res[this._aliasKeysPagination.perPage] = this._params.perPage;
+      } else {
+        res.perPage = this._params.perPage;
+      }
     }
     if (this._params.page) {
-      res.page = this._params.page;
+      if (this._aliasKeysPagination.page) {
+        res[this._aliasKeysPagination.page] = this._params.page;
+      } else {
+        res.page = this._params.page;
+      }
     }
     if (this._params.optional) {
       res.optional = this._params.optional;
@@ -502,8 +591,29 @@ export class BrunoQuery {
    * @param queryParts - Array of query parts
    */
   private handleLimitPage(queryParts: string[]): void {
-    if (this._params.limit) queryParts.push(`limit=${this._params.limit}`);
-    if (this._params.page) queryParts.push(`page=${this._params.page}`);
+    // Handle limit with alias
+    if (this._params.limit) {
+      const limitKey = this._aliasKeysPagination.limit || "limit";
+      queryParts.push(`${limitKey}=${this._params.limit}`);
+    }
+
+    // Handle offset with alias
+    if (this._params.offset) {
+      const offsetKey = this._aliasKeysPagination.offset || "offset";
+      queryParts.push(`${offsetKey}=${this._params.offset}`);
+    }
+
+    // Handle perPage with alias
+    if (this._params.perPage) {
+      const perPageKey = this._aliasKeysPagination.perPage || "perPage";
+      queryParts.push(`${perPageKey}=${this._params.perPage}`);
+    }
+
+    // Handle page with alias
+    if (this._params.page) {
+      const pageKey = this._aliasKeysPagination.page || "page";
+      queryParts.push(`${pageKey}=${this._params.page}`);
+    }
   }
 
   /**
@@ -705,12 +815,14 @@ export class BrunoQuery {
       const instance = new BrunoQuery();
 
       // Core parameters that should be handled directly
-      const coreParams = ["includes", "sort", "filter_groups", "limit", "page"];
+      const coreParams = ["includes", "sort", "filter_groups", "limit", "offset", "perPage", "page"];
 
       // Set core parameters
       if (data.includes) instance.addArrayIncludes(data.includes);
       if (data.sort) instance.addArraySort(data.sort);
       if (data.limit !== undefined) instance.setLimit(data.limit);
+      if (data.offset !== undefined) instance.setOffset(data.offset);
+      if (data.perPage !== undefined) instance.setPerPage(data.perPage);
       if (data.page !== undefined) instance.setPage(data.page);
       if (data.filter_groups) instance.addArrayFilterGroup(data.filter_groups);
 
@@ -773,12 +885,26 @@ export class BrunoQuery {
    * @param params - URLSearchParams
    */
   private parseLimitPage(params: URLSearchParams): void {
-    const limit = params.get("limit");
+    // Try to parse limit (with default key or potential aliases)
+    let limit = params.get("limit");
     if (limit) {
       this.setLimit(parseInt(limit, 10));
     }
 
-    const page = params.get("page");
+    // Try to parse offset (with default key or potential aliases)
+    let offset = params.get("offset");
+    if (offset) {
+      this.setOffset(parseInt(offset, 10));
+    }
+
+    // Try to parse perPage (with default key or potential aliases)
+    let perPage = params.get("perPage");
+    if (perPage) {
+      this.setPerPage(parseInt(perPage, 10));
+    }
+
+    // Try to parse page (with default key or potential aliases)
+    let page = params.get("page");
     if (page) {
       this.setPage(parseInt(page, 10));
     }
@@ -879,7 +1005,7 @@ export class BrunoQuery {
     const optionalArray: Record<string, any>[] = [];
 
     // Get all keys that don't start with known prefixes
-    const knownPrefixes: string[] = ["includes", "sort", "limit", "page", "filter_groups"];
+    const knownPrefixes: string[] = ["includes", "sort", "limit", "offset", "perPage", "page", "filter_groups"];
     const optionalKeys: string[] = [];
     // Use iterator for URLSearchParams
     const entries = params.toString().split("&");
